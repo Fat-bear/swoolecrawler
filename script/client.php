@@ -1,25 +1,50 @@
 <?php
 
 class Client {
-    
+
     private $client;
 
     public function __construct() {
-        $this->client = new swoole_client(SWOOLE_SOCK_TCP);
+        $this->client = new swoole_client(SWOOLE_SOCK_TCP, SWOOLE_SOCK_ASYNC);
+
+        $this->client->on('connect', array($this, 'onConnect'));
+        $this->client->on('receive', array($this, 'onReceive'));
+        $this->client->on('close', array($this, 'onClose'));
+        $this->client->on('error', array($this, 'onError'));
     }
 
     public function connect() {
-        if( !$this->client->connect("127.0.0.1", 9501 , 1) ) {
+        $fp = $this->client->connect("127.0.0.1", 9501 , 1);
+        if( !$fp ) {
             echo "Error: {$fp->errMsg}[{$fp->errCode}]\n";
+            return;
         }
-        $message = $this->client->recv();
-        echo "Get Message From Server:{$message}\n";
+    }
 
-        fwrite(STDOUT, "请输入消息：");
-        $msg = trim(fgets(STDIN));
-        $this->client->send( $msg );
+    public function onReceive($cli, $data ) {
+        echo "Get Message From Server: {$data}\n";
+    }
+
+    public function onConnect($cli) {
+        $cli->send("hello world\n");
+    }
+
+    public function onClose($cli) {
+        echo "Client close connection\n";
+    }
+
+    public function onError($cli) {
+        echo "connect fail\n";
+    }
+
+    public function send($data) {
+        $this->client->send( $data );
+    }
+
+    public function isConnected() {
+        return $this->client->isConnected();
     }
 }
 
-$client = new Client();
-$client->connect();
+$cli = new Client();
+$cli->connect();

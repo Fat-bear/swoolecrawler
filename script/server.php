@@ -1,9 +1,9 @@
 <?php
 
 class Server {
-    
+
     private $serv;
-    
+
     public function __construct() {
         $this->serv = new swoole_server("127.0.0.1", 9501, SWOOLE_BASE, SWOOLE_SOCK_TCP);
         $this->serv->set(array(
@@ -21,7 +21,7 @@ class Server {
         $this->serv->on('receive', array($this, 'onReceive'));
         $this->serv->on('close', array($this, 'onClose'));
     }
-    
+
     public function run() {
         $this->serv->start();
     }
@@ -29,15 +29,15 @@ class Server {
     public function onStart($serv) {
         echo "Client:Connect.\n";
     }
-    
+
     public function onConnect($serv, $fd) {
         $serv->send($fd, "Hello {$fd}!");
     }
-    
+
     public function onReceive($serv, $fd, $from_id, $data) {
         $serv->send($fd, 'Swoole: '.$data);
     }
-    
+
     public function onClose($serv, $fd) {
         echo "Client {$fd} close connection\n";
     }
