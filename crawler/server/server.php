@@ -24,20 +24,36 @@ class Server {
         $this->serv->start();
     }
 
+//    主进程内的回调函数
     public function onStart($serv) {
         echo "Client:Connect.\n";
     }
 
+//    Worker进程内的回调函数
     public function onConnect($serv, $fd) {
         $serv->send($fd, "Hello {$fd}!");
     }
 
     public function onReceive($serv, $fd, $from_id, $data) {
+        $task_id = $serv->task("Async");
         $serv->send($fd, 'Swoole: '.$data);
     }
 
     public function onClose($serv, $fd) {
         echo "Client {$fd} close connection\n";
+    }
+    
+    public function onFinish($serv, $task_id, $data) {
+        echo "Client {$fd} close connection\n";
+    }
+    
+//    task_worker进程内的回调函数
+    public function onWorkerStart($serv, $worker_id) {
+        
+    }
+    
+    public function onTask($serv, $task_id, $from_id, $data) {
+        return $data;
     }
 }
 
