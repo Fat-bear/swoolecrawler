@@ -1,4 +1,7 @@
 <?php
+namespace Crawler\Server;
+
+use Crawler\Library as Lib;
 
 class Server {
 
@@ -6,18 +9,23 @@ class Server {
 
     public function __construct($config) {
         if (!extension_loaded('swoole')) {
-            die('swoole extension not found.');
+            die('Swoole extension not found.');
         }
-        $this->serv = new swoole_server($config['server_addrss'], $config['server_port'], SWOOLE_BASE, SWOOLE_SOCK_TCP);
+        $this->serv = new \swoole_server($config['server_addrss'], $config['server_port'], SWOOLE_BASE, SWOOLE_SOCK_TCP);
         $this->setConfig($config['server_config']);
+        
+        $log = new Lib\Log();
+        $task = new Lib\Task();
+        $timer = new Lib\Timer();
+
         $this->serv->on('Start', array($this, 'onStart'));
         $this->serv->on('Connect', array($this, 'onConnect'));
         $this->serv->on('Receive', array($this, 'onReceive'));
         $this->serv->on('Close', array($this, 'onClose'));
-        $this->serv->on('Finish', array($this, 'onFinish'));
         $this->serv->on('WorkerStart', array($this, 'onWorkerStart'));
-        $this->serv->on('Task', array($this, 'onTask'));
-        $this->serv->on('Timer', array($this, 'onTimer'));
+        $this->serv->on('Finish', array($task, 'onFinish'));
+        $this->serv->on('Task', array($task, 'onTask'));
+        $this->serv->on('Timer', array($timer, 'onTimer'));
     }
     
     public function setConfig($config) {
@@ -30,7 +38,7 @@ class Server {
 
 //    主进程内的回调函数
     public function onStart($serv) {
-        echo "Client:Connect.\n";
+        echo "Ready Client Connect.\n";
     }
 
 //    Worker进程内的回调函数
@@ -46,28 +54,18 @@ class Server {
     public function onClose($serv, $fd) {
         echo "Client {$fd} close connection\n";
     }
-    
-    public function onFinish($serv, $task_id, $data) {
-        echo "Client {$fd} close connection\n";
-    }
-    
+
 //    task_worker进程内的回调函数
     public function onWorkerStart($serv, $worker_id) {
-        $serv->addtimer(1000);
-    }
-    
-    public function onTask($serv, $task_id, $from_id, $data) {
-        return $data;
-    }
-    
-    public function onTimer($serv, $interval) {
-        if ($interval == 1000) {
-            
+        echo "$worker_id\n";
+        if($worker_id == 0) {
+            $serv->addtimer(1000);
         }
     }
+
 }
 
-
+require __DIR__.'/../library/Common.php';
 $server_config = include 'config.php';
 $server = new Server($server_config);
 $server->run();

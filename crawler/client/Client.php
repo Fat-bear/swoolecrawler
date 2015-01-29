@@ -1,4 +1,5 @@
 <?php
+namespace Crawler\Client;
 
 class Client {
 
@@ -8,7 +9,7 @@ class Client {
         if (!extension_loaded('swoole')) {
             die('swoole extension not found.');
         }
-        $this->client = new swoole_client(SWOOLE_SOCK_TCP, SWOOLE_SOCK_ASYNC);
+        $this->client = new \swoole_client(SWOOLE_SOCK_TCP, SWOOLE_SOCK_ASYNC);
 
         $this->client->on('connect', array($this, 'onConnect'));
         $this->client->on('receive', array($this, 'onReceive'));
@@ -49,7 +50,7 @@ class Client {
     }
 }
 
-
+require __DIR__.'/../library/Common.php';
 $client_config = include 'config.php';
-$cli = new Client($client_config);
-$cli->connect();
+$cli = new Client();
+$cli->connect($client_config);
